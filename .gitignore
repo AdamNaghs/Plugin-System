@@ -3,3 +3,4 @@ build/test_runner
 build/plugins/plugin_api.so
 build/plugins/scheduler.so
 build/plugins/signals.so
+docs
