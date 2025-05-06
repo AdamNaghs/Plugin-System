@@ -6,3 +6,4 @@ build/plugins/signals.so
 docs
 build/plugins/threads.so
 build/plugins/graphics.so
+.DS_Store
