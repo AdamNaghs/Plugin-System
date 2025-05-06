@@ -23,9 +23,9 @@ typedef struct PluginManager
 
 void plugin_manager_new(PluginManager* pm, char* folder_path);
 void plugin_manager_free(PluginManager* pm);
+
 void plugin_manager_init(PluginManager* pm, CoreContext* ctx);
 void plugin_manager_update(PluginManager* pm, CoreContext* ctx);
-void plugin_manager_physics(PluginManager* pm, CoreContext* ctx);
 void plugin_manager_draw(PluginManager* pm, CoreContext* ctx);
 void plugin_manager_shutdown(PluginManager* pm, CoreContext* ctx);
 

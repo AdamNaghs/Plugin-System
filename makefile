@@ -16,23 +16,26 @@ else
   RAYLIB_LIB := $(RAYLIB_PREFIX)/lib
 endif
 
-CFLAGS += -I$(RAYLIB_INCLUDE)
+CFLAGS += -I$(RAYLIB_INCLUDE) 
 LDFLAGS += -L$(RAYLIB_LIB) -lraylib -lm -ldl -lpthread
 
 # Source files
 CORE_SRCS := $(wildcard src/*.c)
-MAP_SRCS := external/C-Collection-Map/map.c
 TEST_SRCS := tests/test.c
 PLUGIN_API_SRC := tests/plugin_api.c
+SCHEDULER_SRC := plugins/scheduler/scheduler.c
 
 # Targets
-all: test_runner plugins/plugin_api.so
+all: build/test_runner build/plugins/plugin_api.so build/plugins/scheduler.so
 
-test_runner: $(TEST_SRCS) $(CORE_SRCS) $(MAP_SRCS)
-	$(CC) $(CFLAGS) $^ -o $@ -g
+build/test_runner: $(TEST_SRCS) $(CORE_SRCS) 
+	$(CC) $(CFLAGS) $^ -o $@ 
 
-plugins/plugin_api.so: $(PLUGIN_API_SRC) $(CORE_SRCS) $(MAP_SRCS)
-	$(CC) -shared $(CFLAGS) $^ -o $@ $(LDFLAGS) -g
+build/plugins/plugin_api.so: $(PLUGIN_API_SRC) $(CORE_SRCS) 
+	$(CC) -shared $(CFLAGS) $^ -o $@ $(LDFLAGS) 
+
+build/plugins/scheduler.so: $(SCHEDULER_SRC) $(CORE_SRCS) 
+	$(CC) -shared $(CFLAGS) $^ -o $@ $(LDFLAGS) 
 
 clean:
-	rm -f build/test_runner build/plugins/plugin_api.so *.o
+	rm -f build/test_runner build/plugins/plugin_api.so build/plugins/scheduler.so *.o

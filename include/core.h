@@ -6,7 +6,6 @@
 
 typedef struct Core
 {
-    int should_run;
     PluginManager manager;
     CoreContext context;
 } Core;

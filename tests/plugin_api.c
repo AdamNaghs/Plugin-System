@@ -4,17 +4,16 @@
 
 int init(CoreContext* ctx)
 {
-    printf("Window was inited\n");
     InitWindow(800,600,"Test");
     return 0;
 }
 
 int update(CoreContext* ctx)
 {
-    if (WindowShouldClose())
+    if (WindowShouldClose() || IsKeyPressed(KEY_SPACE))
     {
-        int value = 0;
-        MEM_CTX_SET_VALUE(ctx->memory.map,"CORE_SHOULD_RUN",value);
+        int *ptr = CTX_GET(ctx,"CORE_SHOULD_RUN");
+        *ptr = 0;
     }
     return 0;
 }
@@ -24,6 +23,7 @@ int draw(CoreContext* ctx)
     BeginDrawing();
     ClearBackground(WHITE);
     DrawText("Hello World!",400,300,20,BLACK);
+    DrawFPS(0,0);
     EndDrawing();
     return 0;
 }
@@ -36,5 +36,5 @@ int shutdown(CoreContext* ctx)
 
 PluginAPI Load()
 {
-    return (PluginAPI){init,update,NULL,draw,shutdown};
+    return (PluginAPI){init,update,draw,shutdown};
 }

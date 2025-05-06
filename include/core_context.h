@@ -1,20 +1,22 @@
 #ifndef _CORE_CONTEXT_H
 #define _CORE_CONTEXT_H
 
-#include "memory_ctx.h"
+#include "memory_map.h"
 
 #define DEFAULT_MEMORY_BUCKETS 256
 
+#define CTX_ALLOC(ctx,string,size) (ctx)->memory.alloc(&(ctx)->memory.map, LIT(string), size)
+#define CTX_FREE(ctx,string) (ctx)->memory.free(&(ctx)->memory.map,LIT(string))
+#define CTX_GET(ctx,string) (ctx)->memory.get(&(ctx)->memory.map,LIT(string))
 typedef struct CoreContext
 {
     int version;
     struct
     {
-        Map* map;
-        void* (*alloc)(Map*,const char*, size_t); // allocates size_t bytes and returns it
-        int (*free)(Map*,const char*); // frees data at const char* // map_remove
-        void* (*get)(Map*, const char*);
-        void (*set)(Map*, const char*, void*, size_t); // use MEM_CTX_SET if you're confused
+        MemoryMap map;
+        void* (*alloc)(MemoryMap*, String, size_t); // allocates size_t bytes and returns it
+        int (*free)(MemoryMap*, String); // frees data at const char* // map_remove
+        void* (*get)(MemoryMap*, String);
     } memory;
     float delta_time;
     float fixed_delta_time;

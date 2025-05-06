@@ -9,7 +9,6 @@ typedef struct PluginAPI
 {
     int (*init)(CoreContext*);
     int (*update)(CoreContext*);
-    int (*physics)(CoreContext*);
     int (*draw)(CoreContext*);
     int (*shutdown)(CoreContext*);
 } PluginAPI;

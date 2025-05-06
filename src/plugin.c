@@ -119,15 +119,6 @@ void plugin_manager_update(PluginManager* pm, CoreContext* ctx)
             pm->plugins.list[i].api->update(ctx);
     }
 }
-void plugin_manager_physics(PluginManager* pm, CoreContext* ctx)
-{
-    size_t i;
-    for (i = 0; i < pm->plugins.len; i++)
-    {
-        if (pm->plugins.list[i].api->physics)
-            pm->plugins.list[i].api->physics(ctx);
-    }
-}
 void plugin_manager_draw(PluginManager* pm, CoreContext* ctx)
 {
     size_t i;
