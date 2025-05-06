@@ -5,9 +5,9 @@
 
 #define DEFAULT_MEMORY_BUCKETS 256
 
-#define CTX_ALLOC(ctx,string,size) (ctx)->memory.alloc(&(ctx)->memory.map, LIT(string), size)
-#define CTX_FREE(ctx,string) (ctx)->memory.free(&(ctx)->memory.map,LIT(string))
-#define CTX_GET(ctx,string) (ctx)->memory.get(&(ctx)->memory.map,LIT(string))
+#define CC_ALLOC(ctx,string,size) (ctx)->memory.alloc(&(ctx)->memory.map, LIT(string), size)
+#define CC_FREE(ctx,string) (ctx)->memory.free(&(ctx)->memory.map,LIT(string))
+#define CC_GET(ctx,string) (ctx)->memory.get(&(ctx)->memory.map,LIT(string))
 typedef struct CoreContext
 {
     int version;
