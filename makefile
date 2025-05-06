@@ -25,9 +25,11 @@ TINYCTHREAD_SRC := external/tinycsthread/source/tinycthread.c
 CORE_SRCS := $(filter-out src/main.c, $(wildcard src/*.c))
 PLUGIN_API_SRC := plugins/raylib/test_plugin.c
 SCHEDULER_SRC := plugins/scheduler/scheduler.c
+SIGNALS_SRC := plugins/signals/signals.c
 
+TARGETS := build/test_runner build/plugins/plugin_api.so build/plugins/scheduler.so build/plugins/signals.so
 # Targets
-all: build/test_runner build/plugins/plugin_api.so build/plugins/scheduler.so
+all: $(TARGETS)
 
 build/test_runner: $(MAIN) $(CORE_SRCS) 
 	$(CC) $(CFLAGS) $^ -o $@ 
@@ -38,5 +40,8 @@ build/plugins/plugin_api.so: $(PLUGIN_API_SRC) $(CORE_SRCS)
 build/plugins/scheduler.so: $(SCHEDULER_SRC) $(CORE_SRCS) 
 	$(CC) -shared $(CFLAGS) $^ -o $@ $(LDFLAGS) 
 
+build/plugins/signals.so: $(SIGNALS_SRC) $(CORE_SRCS) 
+	$(CC) -shared $(CFLAGS) $^ -o $@ $(LDFLAGS) 
+
 clean:
-	rm -f build/test_runner build/plugins/plugin_api.so build/plugins/scheduler.so *.o
+	rm -f $(TARGETS) *.o
