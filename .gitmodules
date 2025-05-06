@@ -1,0 +1,3 @@
+[submodule "external/C-Collection-Map"]
+	path = external/C-Collection-Map
+	url = https://github.com/AdamNaghs/C-Collection-Map.git
