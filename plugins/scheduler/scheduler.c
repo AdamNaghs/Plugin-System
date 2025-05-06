@@ -50,7 +50,9 @@ void scheduler_register(CoreContext* ctx, const char* name, float interval, Sche
     task->user_data = user_data;
 }
 
+static PluginMetadata meta = {"Scheduler", {NULL}};
+
 PluginAPI Load()
 {
-    return (PluginAPI){init,update,NULL,shutdown};
+    return (PluginAPI){init,update,shutdown,&meta};
 }
