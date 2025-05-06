@@ -4,6 +4,7 @@
 
 int init(CoreContext *ctx)
 {
+    (void)ctx;
     InitWindow(800, 600, "Test");
     return 0;
 }
@@ -26,6 +27,7 @@ int update(CoreContext *ctx)
 
 int shutdown(CoreContext *ctx)
 {
+    (void)ctx;
     CloseWindow();
     return 0;
 }

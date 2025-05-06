@@ -21,8 +21,9 @@ LDFLAGS += -L$(RAYLIB_LIB) -lraylib -lm -ldl -lpthread
 
 # Source files
 MAIN := src/main.c
+TINYCTHREAD_SRC := external/tinycsthread/source/tinycthread.c
 CORE_SRCS := $(filter-out src/main.c, $(wildcard src/*.c))
-PLUGIN_API_SRC := plugins/raylib/plugin_api.c
+PLUGIN_API_SRC := plugins/raylib/test_plugin.c
 SCHEDULER_SRC := plugins/scheduler/scheduler.c
 
 # Targets
