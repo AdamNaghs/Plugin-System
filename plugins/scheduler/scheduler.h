@@ -20,6 +20,6 @@ typedef struct {
     size_t capacity;
 } Scheduler;
 
-void scheduler_register(CoreContext* ctx, const char* name, float interval, ScheduledFn fn, void* user_data);
+void scheduler_register(const char* name, float interval, ScheduledFn fn, void* user_data);
 
 #endif
