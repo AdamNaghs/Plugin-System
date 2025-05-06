@@ -17,15 +17,18 @@ float get_dt() {
 #include <time.h>
 
 static float delta_time = 0.0f;
-static clock_t last_time = 0;
+static struct timespec last_time = {0};
 
 void dt_update() {
-    clock_t now = clock();
-    if (last_time == 0) {
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+
+    if (last_time.tv_sec == 0 && last_time.tv_nsec == 0) {
         last_time = now;
         delta_time = 0.0f;
     } else {
-        delta_time = (float)(now - last_time) / CLOCKS_PER_SEC;
+        delta_time = (now.tv_sec - last_time.tv_sec)
+                   + (now.tv_nsec - last_time.tv_nsec) / 1e9f;
         last_time = now;
     }
 }
@@ -33,5 +36,6 @@ void dt_update() {
 float get_dt() {
     return delta_time;
 }
+
 
 #endif
