@@ -18,7 +18,6 @@ bool mm_str_eq(String a, String b);
 
 size_t mm_hash_default(const char *data, size_t len);
 
-
 typedef struct MemoryEntry
 {
     char *name;
