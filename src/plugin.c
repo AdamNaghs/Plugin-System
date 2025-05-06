@@ -187,8 +187,8 @@ void plugin_manager_init(PluginManager* pm, CoreContext* ctx)
     for (i = 0; i < pm->plugins.len; i++)
     {
         printf("Loading Plugin: %s\n", pm->plugins.list[i].api->meta->name);
-        if (pm->plugins.list[i].api->init)
-            pm->plugins.list[i].api->init(ctx);
+        if (sorted_plugins[i]->api->init)
+        sorted_plugins[i]->api->init(ctx);
     }
 }
 void plugin_manager_update(PluginManager* pm, CoreContext* ctx)
