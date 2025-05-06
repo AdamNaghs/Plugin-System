@@ -8,7 +8,7 @@
 #define CC_ALLOC(ctx,string,size) (ctx)->memory.alloc(&(ctx)->memory.map, LIT(string), size)
 #define CC_FREE(ctx,string) (ctx)->memory.free(&(ctx)->memory.map,LIT(string))
 #define CC_GET(ctx,string) (ctx)->memory.get(&(ctx)->memory.map,LIT(string))
-#define CC_BIND(ctx,string,data,size,owned) (ctx)->memory.get(&(ctx)->memory.map,LIT(string),data,size,owned)
+#define CC_BIND(ctx,string,data,size,owned) (ctx)->memory.bind(&(ctx)->memory.map,LIT(string),data,size,owned)
 typedef struct CoreContext
 {
     int version;
