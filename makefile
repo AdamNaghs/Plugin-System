@@ -20,15 +20,15 @@ CFLAGS += -I$(RAYLIB_INCLUDE)
 LDFLAGS += -L$(RAYLIB_LIB) -lraylib -lm -ldl -lpthread
 
 # Source files
-CORE_SRCS := $(wildcard src/*.c)
-TEST_SRCS := tests/test.c
-PLUGIN_API_SRC := tests/plugin_api.c
+MAIN := src/main.c
+CORE_SRCS := $(filter-out src/main.c, $(wildcard src/*.c))
+PLUGIN_API_SRC := plugins/raylib/plugin_api.c
 SCHEDULER_SRC := plugins/scheduler/scheduler.c
 
 # Targets
 all: build/test_runner build/plugins/plugin_api.so build/plugins/scheduler.so
 
-build/test_runner: $(TEST_SRCS) $(CORE_SRCS) 
+build/test_runner: $(MAIN) $(CORE_SRCS) 
 	$(CC) $(CFLAGS) $^ -o $@ 
 
 build/plugins/plugin_api.so: $(PLUGIN_API_SRC) $(CORE_SRCS) 
