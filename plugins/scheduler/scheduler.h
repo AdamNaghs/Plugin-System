@@ -1,7 +1,6 @@
 #ifndef _SCHEDULER
 #define _SCHEDULER
 
-#include "../../include/core_context.h"
 #include "../../include/plugin_api.h"
 
 typedef void (*ScheduledFn)(CoreContext*, void*);

@@ -11,8 +11,7 @@ typedef void (*SchedulerRegisterFn)(const char*, float, ScheduledFn, void*);
 int init(CoreContext* ctx)
 {
     scheduler = ctx->memory.alloc(&ctx->memory.map,LIT("SCHEDULER"),sizeof(Scheduler));
-    SchedulerRegisterFn* fn = CC_ALLOC(ctx,"SCHEDULER::Register",sizeof(scheduler_register));
-    *fn = scheduler_register;
+    CC_BIND(ctx,"SCHEDULER::Register",scheduler_register,sizeof(scheduler_register),false);
     scheduler->tasks = malloc(DEFAULT_CAPACITY * sizeof(ScheduledTask));
     scheduler->capacity = DEFAULT_CAPACITY;
     scheduler->count = 0;
