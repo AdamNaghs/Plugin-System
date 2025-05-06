@@ -32,8 +32,8 @@ int shutdown(CoreContext *ctx)
     return 0;
 }
 
-static const char* deps[] = { "Scheduler", NULL };
-static PluginMetadata meta = {"Plugin Test", deps};
+static const char* deps[] = { NULL };
+static PluginMetadata meta = {"Graphics", deps};
 
 PluginAPI Load()
 {
