@@ -3,7 +3,6 @@
 
 #include "../include/plugin.h"
 
-
 typedef struct Core
 {
     PluginManager manager;
