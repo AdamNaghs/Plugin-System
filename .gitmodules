@@ -1,3 +1,6 @@
 [submodule "external/C-Collection-Map"]
 	path = external/C-Collection-Map
 	url = https://github.com/AdamNaghs/C-Collection-Map.git
+[submodule "external/tinycthread"]
+	path = external/tinycthread
+	url = https://github.com/tinycthread/tinycthread.git
