@@ -9,6 +9,7 @@ void core_context_new(CoreContext* ctx, int version)
     ctx->memory.alloc = mm_alloc;
     ctx->memory.free = mm_remove;
     ctx->memory.get = mm_get;
+    ctx->memory.bind = mm_bind;
 }
 
 void core_context_free(CoreContext* ctx)

@@ -8,6 +8,7 @@
 #define CC_ALLOC(ctx,string,size) (ctx)->memory.alloc(&(ctx)->memory.map, LIT(string), size)
 #define CC_FREE(ctx,string) (ctx)->memory.free(&(ctx)->memory.map,LIT(string))
 #define CC_GET(ctx,string) (ctx)->memory.get(&(ctx)->memory.map,LIT(string))
+#define CC_BIND(ctx,string,data,size,owned) (ctx)->memory.get(&(ctx)->memory.map,LIT(string),data,size,owned)
 typedef struct CoreContext
 {
     int version;
@@ -17,6 +18,7 @@ typedef struct CoreContext
         void* (*alloc)(MemoryMap*, String, size_t); // allocates size_t bytes and returns it
         int (*free)(MemoryMap*, String); // frees data at const char* // map_remove
         void* (*get)(MemoryMap*, String);
+        void (*bind)(MemoryMap *mm, String name, void *memory, size_t size, bool owned);
     } memory;
     float delta_time;
     float fixed_delta_time;
