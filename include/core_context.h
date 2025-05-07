@@ -10,6 +10,7 @@
  #define _CORE_CONTEXT_H
  
  #include "memory_map.h"
+ #include "logger.h"
  
  /**
   * @def DEFAULT_MEMORY_BUCKETS
@@ -84,6 +85,12 @@
           */
          void (*bind)(MemoryMap *mm, String name, void *memory, size_t size, bool owned);
      } memory;
+
+     /**
+      * @brief Logs to log file and stderr.
+      * 
+      */
+     void (*log)(enum LogLevel level, const char* fmt, ...);
  
      float delta_time;        /**< Time in seconds since the last frame. */
      float fixed_delta_time;  /**< Fixed time step, if used (optional). */
