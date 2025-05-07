@@ -69,11 +69,17 @@ typedef struct {
     void* user_data;
 } QueuedJob;
 
+typedef struct {
+    QueuedJob* data;
+    size_t head;
+    size_t tail;
+    size_t count;
+    size_t capacity;
+} JobQueue;
+
+static JobQueue job_queue;
+
 static ThreadJob jobs[MAX_THREADS];
-static QueuedJob job_queue[MAX_QUEUED_JOBS];
-static int queue_head = 0;
-static int queue_tail = 0;
-static int queue_count = 0;
 
 static int thread_entry(void* arg) {
     ThreadJob* job = (ThreadJob*)arg;
@@ -82,25 +88,58 @@ static int thread_entry(void* arg) {
     return 0;
 }
 
-static void enqueue_job(int (*fn)(void*), void* user_data) {
-    if (queue_count >= MAX_QUEUED_JOBS) {
-        printf("Thread queue overflow. Running on main thread.\n");
-        (*fn)(user_data);
-        return;
-    }
-    job_queue[queue_tail] = (QueuedJob){ fn, user_data };
-    queue_tail = (queue_tail + 1) % MAX_QUEUED_JOBS;
-    queue_count++;
+void job_queue_init(JobQueue* q) {
+    q->capacity = 64;  // initial capacity
+    q->data = malloc(sizeof(QueuedJob) * q->capacity);
+    q->head = q->tail = q->count = 0;
 }
 
+void job_queue_free(JobQueue* q) {
+    free(q->data);
+    q->data = NULL;
+    q->count = q->capacity = q->head = q->tail = 0;
+}
+
+
+void job_queue_push(JobQueue* q, int (*fn)(void*), void* user_data) {
+    if (q->count >= q->capacity) {
+        size_t new_capacity = q->capacity * 2;
+        QueuedJob* new_data = malloc(sizeof(QueuedJob) * new_capacity);
+
+        // Copy circular queue into linear layout
+        for (size_t i = 0; i < q->count; ++i)
+            new_data[i] = q->data[(q->head + i) % q->capacity];
+
+        free(q->data);
+        q->data = new_data;
+        q->head = 0;
+        q->tail = q->count;
+        q->capacity = new_capacity;
+    }
+
+    q->data[q->tail] = (QueuedJob){ fn, user_data };
+    q->tail = (q->tail + 1) % q->capacity;
+    q->count++;
+}
+
+int job_queue_pop(JobQueue* q, QueuedJob* out) {
+    if (q->count == 0) return 0;
+
+    *out = q->data[q->head];
+    q->head = (q->head + 1) % q->capacity;
+    q->count--;
+    return 1;
+}
+
+
+
 static int try_start_queued_job() {
-    if (queue_count == 0) return 0;
+    if (job_queue.count == 0) return 0;
 
     for (int i = 0; i < MAX_THREADS; i++) {
         if (!jobs[i].active) {
-            QueuedJob qj = job_queue[queue_head];
-            queue_head = (queue_head + 1) % MAX_QUEUED_JOBS;
-            queue_count--;
+            QueuedJob qj;
+            if (!job_queue_pop(&job_queue, &qj)) return 0;
 
             jobs[i].active = 1;
             jobs[i].finished = 0;
@@ -110,8 +149,10 @@ static int try_start_queued_job() {
             return 1;
         }
     }
+
     return 0;
 }
+
 
 void thread_spawn(int (*fn)(void*), void* user_data) {
     for (int i = 0; i < MAX_THREADS; i++) {
@@ -126,7 +167,7 @@ void thread_spawn(int (*fn)(void*), void* user_data) {
     }
 
     // No thread slot available — queue it
-    enqueue_job(fn, user_data);
+    job_queue_push(&job_queue,fn, user_data);
 }
 
 int update(CoreContext* ctx) {
@@ -147,23 +188,26 @@ int update(CoreContext* ctx) {
 
 int init(CoreContext* ctx) {
     memset(jobs, 0, sizeof(jobs));
-    queue_head = queue_tail = queue_count = 0;
-    CC_BIND(ctx, "thread::spawn", thread_spawn, sizeof(thread_spawn), false);
+    job_queue_init(&job_queue);
 
-    CC_BIND(ctx, "thread::mtx_init", core_mtx_init, sizeof(core_mtx_init), false);
-    CC_BIND(ctx, "thread::mtx_destroy", core_mtx_destroy, sizeof(core_mtx_destroy), false);
-    CC_BIND(ctx, "thread::mtx_lock", core_mtx_lock, sizeof(core_mtx_lock), false);
-    CC_BIND(ctx, "thread::mtx_trylock", core_mtx_trylock, sizeof(core_mtx_trylock), false);
-    CC_BIND(ctx, "thread::mtx_unlock", core_mtx_unlock, sizeof(core_mtx_unlock), false);
-    CC_BIND(ctx, "thread::mtx_timedlock", core_mtx_timedlock, sizeof(core_mtx_timedlock), false);
+    // Job system
+    CC_BIND(ctx, CC_THREAD_SPAWN, thread_spawn, sizeof(thread_spawn), false);
 
-    CC_BIND(ctx, "thread::raw::create", core_thrd_create, sizeof(thrd_create), false);
-    CC_BIND(ctx, "thread::raw::join", core_thrd_join, sizeof(thrd_join), false);
-    CC_BIND(ctx, "thread::raw::detach", core_thrd_detach, sizeof(thrd_detach), false);
-    CC_BIND(ctx, "thread::raw::sleep", core_thrd_sleep, sizeof(thrd_sleep), false);
-    CC_BIND(ctx, "thread::raw::exit", core_thrd_exit, sizeof(thrd_exit), false);
-    CC_BIND(ctx, "thread::raw::yield", core_thrd_yield, sizeof(thrd_yield), false);
+    // Mutex operations
+    CC_BIND(ctx, CC_THREAD_MTX_INIT, core_mtx_init, sizeof(core_mtx_init), false);
+    CC_BIND(ctx, CC_THREAD_MTX_DESTROY, core_mtx_destroy, sizeof(core_mtx_destroy), false);
+    CC_BIND(ctx, CC_THREAD_MTX_LOCK, core_mtx_lock, sizeof(core_mtx_lock), false);
+    CC_BIND(ctx, CC_THREAD_MTX_TRYLOCK, core_mtx_trylock, sizeof(core_mtx_trylock), false);
+    CC_BIND(ctx, CC_THREAD_MTX_UNLOCK, core_mtx_unlock, sizeof(core_mtx_unlock), false);
+    CC_BIND(ctx, CC_THREAD_MTX_TIMEDLOCK, core_mtx_timedlock, sizeof(core_mtx_timedlock), false);
 
+    // Raw thread functions
+    CC_BIND(ctx, CC_THREAD_CREATE, core_thrd_create, sizeof(core_thrd_create), false);
+    CC_BIND(ctx, CC_THREAD_JOIN, core_thrd_join, sizeof(core_thrd_join), false);
+    CC_BIND(ctx, CC_THREAD_DETACH, core_thrd_detach, sizeof(core_thrd_detach), false);
+    CC_BIND(ctx, CC_THREAD_SLEEP, core_thrd_sleep, sizeof(core_thrd_sleep), false);
+    CC_BIND(ctx, CC_THREAD_EXIT, core_thrd_exit, sizeof(core_thrd_exit), false);
+    CC_BIND(ctx, CC_THREAD_YIELD, core_thrd_yield, sizeof(core_thrd_yield), false);
     return 0;
 }
 
@@ -178,7 +222,7 @@ int shutdown(CoreContext* ctx) {
         }
     }
 
-    queue_head = queue_tail = queue_count = 0;
+    job_queue_free(&job_queue);
     return 0;
 }
 

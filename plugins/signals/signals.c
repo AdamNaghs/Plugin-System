@@ -82,9 +82,9 @@ int init(CoreContext* ctx) {
     mm_init(&signal_map, 32, malloc, free, mm_hash_default);
     signal_queue_init(&signal_queue);
 
-    CC_BIND(ctx, "signal::connect", signal_connect, sizeof(signal_connect), false);
-    CC_BIND(ctx, "signal::emit", signal_emit, sizeof(signal_emit), false);
-    CC_BIND(ctx, "signal::emit_deferred", signal_emit_deferred, sizeof(signal_emit_deferred), false);
+    CC_BIND(ctx, CC_SIGNAL_CONNECT, signal_connect, sizeof(signal_connect), false);
+    CC_BIND(ctx, CC_SIGNAL_EMIT, signal_emit, sizeof(signal_emit), false);
+    CC_BIND(ctx, CC_SIGNAL_DEFERRED, signal_emit_deferred, sizeof(signal_emit_deferred), false);
 
     return 0;
 }

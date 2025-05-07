@@ -10,6 +10,8 @@
  #define _SCHEDULER
  
  #include "../../include/plugin_api.h"
+
+ #define CC_SCHEDULER_REGISTER "scheduler::register"
  
  /**
   * @brief Function pointer type for scheduled tasks.

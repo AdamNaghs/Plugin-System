@@ -10,6 +10,34 @@
  #define _SIGNALS_H
  
  #include "../../include/plugin_api.h"
+
+ #pragma once
+ // signals_plugin.h — Keys and types exported by the Signals plugin
+ 
+ /**
+  * Connects a callback function to a named signal.
+  * 
+  * Signature:
+  *   void (*)(const char* signal_name, SignalCallback cb, void* user_data)
+  */
+ #define CC_SIGNAL_CONNECT "signal::connect"
+ 
+ /**
+  * Emits a signal immediately (synchronous).
+  * 
+  * Signature:
+  *   void (*)(CoreContext* ctx, const char* signal_name, void* sender, void* args)
+  */
+ #define CC_SIGNAL_EMIT "signal::emit"
+ 
+ /**
+  * Emits a signal at the end of the current frame (deferred).
+  * 
+  * Signature:
+  *   void (*)(const char* signal_name, void* sender, void* args)
+  */
+ #define CC_SIGNAL_DEFERRED "signal::emit_deferred"
+ 
  
  /**
   * @brief Function pointer type for signal callbacks.
