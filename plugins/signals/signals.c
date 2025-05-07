@@ -102,7 +102,8 @@ int shutdown(CoreContext* ctx) {
 }
 
 static const char* deps[] = { NULL };
-static PluginMetadata meta = { "Signals", deps };
+static const char* optional[] = { NULL };
+static PluginMetadata meta = { "Signals", deps, optional };
 
 PluginAPI Load() {
     return (PluginAPI){

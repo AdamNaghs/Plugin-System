@@ -33,7 +33,8 @@ int shutdown(CoreContext *ctx)
 }
 
 static const char* deps[] = { NULL };
-static PluginMetadata meta = {"Graphics", deps};
+static const char* optional[] = { NULL };
+static PluginMetadata meta = {"Graphics", deps, optional};
 
 PluginAPI Load()
 {

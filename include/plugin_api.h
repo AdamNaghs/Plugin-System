@@ -16,7 +16,8 @@
   */
  typedef struct PluginMetadata {
      const char* name;          /**< Unique plugin name (e.g., "Scheduler", "Signals"). */
-     const char** depends_on;   /**< NULL-terminated list of plugin names this plugin depends on. */
+     const char** required_deps;   /**< NULL-terminated list of plugin names this plugin depends on. */
+     const char** optional_deps;
  } PluginMetadata;
  
  /**

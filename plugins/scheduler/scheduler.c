@@ -56,8 +56,8 @@ void scheduler_register(const char* name, float interval, ScheduledFn fn, void* 
 }
 
 static const char* deps[] = {NULL};
-
-static PluginMetadata meta = {"Scheduler", deps};
+static const char* optional[] = { NULL };
+static PluginMetadata meta = {"Scheduler", deps, optional};
 
 PluginAPI Load()
 {

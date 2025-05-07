@@ -183,7 +183,8 @@ int shutdown(CoreContext* ctx) {
 }
 
 static const char* deps[] = { NULL };
-static PluginMetadata meta = { "Threads", deps };
+static const char* optional[] = { NULL };
+static PluginMetadata meta = { "Threads", deps, optional };
 
 PluginAPI Load() {
     return (PluginAPI){
