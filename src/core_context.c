@@ -10,6 +10,7 @@ void core_context_new(CoreContext* ctx, int version)
     ctx->memory.free = mm_remove;
     ctx->memory.get = mm_get;
     ctx->memory.bind = mm_bind;
+    ctx->log = logger;
 }
 
 void core_context_free(CoreContext* ctx)

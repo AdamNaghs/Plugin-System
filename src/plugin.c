@@ -49,14 +49,14 @@ void plugin_manager_new(PluginManager *pm, char *folder_path)
             DYNLIB_HANDLE handle = DYNLIB_OPEN(fullpath);
             if (!handle)
             {
-                fprintf(stderr, "Failed to load plugin: %s\n", fullpath);
+                logger(LL_ERROR, "\t\tFailed to load plugin: %s", fullpath);
                 continue;
             }
 
             PluginAPI (*load_func)() = (PluginAPI (*)())DYNLIB_SYM(handle, "Load");
             if (!load_func)
             {
-                fprintf(stderr, "Missing Load() in plugin: %s\n", fullpath);
+                logger(LL_ERROR, "\t\tMissing Load() in plugin: %s", fullpath);
                 DYNLIB_CLOSE(handle);
                 continue;
             }
@@ -67,7 +67,7 @@ void plugin_manager_new(PluginManager *pm, char *folder_path)
             plugin->handle = handle;
             plugin->name = strdup(entry->d_name);
             // plugin->name[strlen(plugin->name)-3] = 0; /* remove ".so" from name */
-            printf("Found Plugin: %s\n", plugin->name);
+            logger(LL_INFO, "\t\tFound Plugin: %s", plugin->name);
         }
     }
     closedir(dir);
@@ -116,12 +116,11 @@ typedef struct Node
 {
     const char *name;
     Plugin *plugin;
-    const char **depends_on;      // required
-    const char **optional_deps;   // new
+    const char **depends_on;    // required
+    const char **optional_deps; // new
     int visited;
     int visiting;
 } Node;
-
 
 static Node *find_node(Node *nodes, int count, const char *name)
 {
@@ -137,7 +136,7 @@ static int dfs(Node *node, Node **sorted, int *index, Node *nodes, int total)
 {
     if (node->visiting)
     {
-        printf("Cyclic dependency detected at %s\n", node->name);
+        logger(LL_ERROR, "\t\tCyclic dependency detected at %s", node->name);
         return 0;
     }
     if (node->visited)
@@ -150,7 +149,7 @@ static int dfs(Node *node, Node **sorted, int *index, Node *nodes, int total)
         Node *dep_node = find_node(nodes, total, *dep);
         if (!dep_node)
         {
-            printf("Missing dependency: %s for plugin %s\n", *dep, node->name);
+            logger(LL_ERROR, "\t\tMissing dependency: %s for plugin %s", *dep, node->name);
             return 0;
         }
         if (!dfs(dep_node, sorted, index, nodes, total))
@@ -172,14 +171,14 @@ int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
     int index = 0;
 
     // Create nodes
-    for (int i = 0; i < total; i++) {
-        Plugin* p = &pm->plugins.list[i];
+    for (int i = 0; i < total; i++)
+    {
+        Plugin *p = &pm->plugins.list[i];
         nodes[i].name = p->api->meta->name;
         nodes[i].depends_on = p->api->meta->required_deps;
         nodes[i].optional_deps = p->api->meta->optional_deps;
         nodes[i].plugin = p;
     }
-    
 
     // Sort
     for (int i = 0; i < total; i++)
@@ -194,12 +193,15 @@ int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
     }
 
     // Validate optional deps (warn only)
-    for (int i = 0; i < total; i++) {
-        const char** opt = nodes[i].optional_deps;
-        while (opt && *opt) {
-            if (!find_node(nodes, total, *opt)) {
-                printf("Warning: Optional dependency '%s' missing for plugin '%s'\n",
-                    *opt, nodes[i].name);
+    for (int i = 0; i < total; i++)
+    {
+        const char **opt = nodes[i].optional_deps;
+        while (opt && *opt)
+        {
+            if (!find_node(nodes, total, *opt))
+            {
+                logger(LL_WARN, "\t\tOptional dependency '%s' missing for plugin '%s'",
+                       *opt, nodes[i].name);
             }
             opt++;
         }
@@ -215,7 +217,7 @@ void plugin_manager_init(PluginManager *pm, CoreContext *ctx)
     Plugin *sorted_plugins[MAX_PLUGIN_COUNT];
     if (!sort_plugins_by_dependency(pm, sorted_plugins))
     {
-        fprintf(stderr, "Plugin dependency sorting failed\n");
+        logger(LL_ERROR, "\t\tPlugin dependency sorting failed");
         exit(1);
     }
 
@@ -231,10 +233,9 @@ void plugin_manager_init(PluginManager *pm, CoreContext *ctx)
     free(pm->plugins.list);
     pm->plugins.list = new_list;
 
-    
     for (i = 0; i < pm->plugins.len; i++) //  load most depended plugins first
     {
-        printf("Loading Plugin: %s\n", pm->plugins.list[i].api->meta->name);
+        logger(LL_INFO, "\t\tLoading Plugin: %s", pm->plugins.list[i].api->meta->name);
         if (pm->plugins.list[i].api->init)
             pm->plugins.list[i].api->init(ctx);
     }
@@ -243,27 +244,27 @@ void plugin_manager_init(PluginManager *pm, CoreContext *ctx)
 void plugin_manager_update(PluginManager *pm, CoreContext *ctx)
 {
     size_t i;
-    for (i = 0; i < pm->plugins.len; i++) {
+    for (i = 0; i < pm->plugins.len; i++)
+    {
         if (pm->plugins.list[i].api->update)
             pm->plugins.list[i].api->update(ctx);
     }
 }
 void plugin_manager_shutdown(PluginManager *pm, CoreContext *ctx)
 {
-    printf("Plugin Shutdown:\n");
+    logger(LL_INFO, "\t\tPlugin Shutdown:");
     size_t i;
-    for (i = pm->plugins.len; i-- > 0; ) //  unload in least depended plugins first
+    for (i = pm->plugins.len; i-- > 0;) //  unload in least depended plugins first
     {
         if (pm->plugins.list[i].api->shutdown)
         {
             pm->plugins.list[i].api->shutdown(ctx);
-            printf("+\t%s \tsuccessfully shutdown.\n",pm->plugins.list[i].api->meta->name);
-            printf("");
+            logger(LL_INFO, "\t\t+\t%s \tsuccessfully shutdown.", pm->plugins.list[i].api->meta->name);
         }
         else
         {
-            printf("-\t%s \tmissing shutdown.\n",pm->plugins.list[i].api->meta->name);
+            logger(LL_INFO, "\t\t-\t%s \tmissing shutdown.", pm->plugins.list[i].api->meta->name);
         }
     }
-    printf("\tShutdown %zu plugins.\n",pm->plugins.len);
+    logger(LL_INFO, "\t\t\tShutdown %zu plugins.", pm->plugins.len);
 }
