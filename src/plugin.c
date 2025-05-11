@@ -285,7 +285,7 @@ void plugin_manager_shutdown(PluginManager *pm, CoreContext *ctx)
 {
     ctx->log(LL_INFO, "\t\tPlugin Shutdown:");
     size_t i;
-    for (i = pm->plugins.len; i-- > 0;) //  unload in least depended plugins first
+    for (i = pm->plugins.len; i-- > 0;) //  unload most connected plugins first
     {
         if (pm->plugins.list[i].api->shutdown)
         {
