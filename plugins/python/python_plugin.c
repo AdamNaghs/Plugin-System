@@ -212,7 +212,7 @@ static PyObject* py_memory_get(PyObject* self, PyObject* args)
     if (!ptr)
         Py_RETURN_NONE;
 
-    size_t size = mm_get_size(&python_ctx->memory.map, (String){(char *)key, strlen(key)});
+    size_t size = mm_get_size(&python_ctx->memory.map, STR((char *)key));
 
     if (size == sizeof(int))
     {
