@@ -24,7 +24,7 @@ function init()
 end
 
 function update(dt)
-    -- Optionally, you can re-emit the signal every 3 seconds
+    -- Re-emit the signal every 3 seconds
     counter = counter + dt
     if counter >= 3.0 then
         core.log("3 seconds passed. Emitting lua_test_signal again...")
