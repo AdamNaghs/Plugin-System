@@ -18,16 +18,51 @@ static int lua_log(lua_State *L)
 
 static int update_ref = LUA_NOREF;
 
+void run_lua_func(CoreContext *ctx, char *function)
+{
+    lua_getglobal(L, function);
+    if (lua_isfunction(L, -1))
+    {
+        if (lua_pcall(L, 0, 0, 0) != LUA_OK)
+        {
+            ctx->log(LL_ERROR, "[lua::%s] %s", function, lua_tostring(L, -1));
+            lua_pop(L, 1); // pop error
+            return;
+        }
+    }
+    else
+    {
+        lua_pop(L, 1); // not a function
+    }
+}
+
 int init(CoreContext *ctx)
 {
     L = luaL_newstate();
     CC_BIND(ctx,"lua::state",L,sizeof(L),false);
     luaL_openlibs(L);
 
-    // Example: bind log to Lua
+    lua_newtable(L);              // plugins
+    lua_setglobal(L, "core");     // core.plugins = {}
+
+    lua_getglobal(L, "core");
+    lua_newtable(L);
+    lua_setfield(L, -2, "plugins");
+
+
+    // Push core table
+    lua_getglobal(L, "core");
+
+    // Push closure
     lua_pushlightuserdata(L, ctx);
     lua_pushcclosure(L, lua_log, 1);
-    lua_setglobal(L, "log");
+
+    // Set core.log = closure
+    lua_setfield(L, -2, "log");
+
+    // Pop core table
+    lua_pop(L, 1);
+
 
     // Optional: load an initial script
     if (luaL_dofile(L, "scripts/init.lua") != LUA_OK)
@@ -46,26 +81,12 @@ int init(CoreContext *ctx)
         lua_pop(L, 1); // not a function, discard
     }
 
+    run_lua_func(ctx,"init");
+
     return 0;
 }
 
-void run_lua_func(CoreContext *ctx, char *function)
-{
-    lua_getglobal(L, function);
-    if (lua_isfunction(L, -1))
-    {
-        if (lua_pcall(L, 0, 0, 0) != LUA_OK)
-        {
-            ctx->log(LL_ERROR, "[lua::%s] %s", function, lua_tostring(L, -1));
-            lua_pop(L, 1); // pop error
-            return;
-        }
-    }
-    else
-    {
-        lua_pop(L, 1); // not a function
-    }
-}
+
 
 int shutdown(CoreContext *ctx)
 {

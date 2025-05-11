@@ -9,4 +9,4 @@ build/plugins/graphics.so
 .DS_Store
 logs
 build/plugins/lua.so
-build/scripts/init.lua
+build/plugins/python.so
