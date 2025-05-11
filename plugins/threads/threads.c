@@ -3,36 +3,6 @@
 #include <string.h>
 #include <stdio.h>
 
-int core_mtx_init(mtx_t *mtx, int type)
-{
-    return mtx_init(mtx, type);
-}
-
-void core_mtx_destroy(mtx_t *mtx)
-{
-    mtx_destroy(mtx);
-}
-
-int core_mtx_lock(mtx_t *mtx)
-{
-    return mtx_lock(mtx);
-}
-
-int core_mtx_trylock(mtx_t *mtx)
-{
-    return mtx_trylock(mtx);
-}
-
-int core_mtx_unlock(mtx_t *mtx)
-{
-    return mtx_unlock(mtx);
-}
-
-int core_mtx_timedlock(mtx_t *mtx, const struct timespec *ts)
-{
-    return mtx_timedlock(mtx, ts);
-}
-
 int core_thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 {
     return thrd_create(thr, func, arg);
@@ -222,14 +192,6 @@ int init(CoreContext *ctx)
 
     // Job system
     CC_BIND(ctx, CC_THREAD_SPAWN, thread_spawn, sizeof(thread_spawn), false);
-
-    // Mutex operations
-    CC_BIND(ctx, CC_THREAD_MTX_INIT, core_mtx_init, sizeof(core_mtx_init), false);
-    CC_BIND(ctx, CC_THREAD_MTX_DESTROY, core_mtx_destroy, sizeof(core_mtx_destroy), false);
-    CC_BIND(ctx, CC_THREAD_MTX_LOCK, core_mtx_lock, sizeof(core_mtx_lock), false);
-    CC_BIND(ctx, CC_THREAD_MTX_TRYLOCK, core_mtx_trylock, sizeof(core_mtx_trylock), false);
-    CC_BIND(ctx, CC_THREAD_MTX_UNLOCK, core_mtx_unlock, sizeof(core_mtx_unlock), false);
-    CC_BIND(ctx, CC_THREAD_MTX_TIMEDLOCK, core_mtx_timedlock, sizeof(core_mtx_timedlock), false);
 
     // Raw thread functions
     CC_BIND(ctx, CC_THREAD_CREATE, core_thrd_create, sizeof(core_thrd_create), false);

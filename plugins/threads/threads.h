@@ -26,50 +26,6 @@
   */
  #define CC_THREAD_SPAWN           "thread::spawn"
  
- // ---------------- Mutex Operations ----------------
- 
- /**
-  * @brief Initializes a mutex.
-  * 
-  * @signature int (*)(mtx_t* mtx, int type)
-  */
- #define CC_THREAD_MTX_INIT        "thread::mtx_init"
- 
- /**
-  * @brief Destroys a mutex.
-  * 
-  * @signature void (*)(mtx_t* mtx)
-  */
- #define CC_THREAD_MTX_DESTROY     "thread::mtx_destroy"
- 
- /**
-  * @brief Locks a mutex.
-  * 
-  * @signature int (*)(mtx_t* mtx)
-  */
- #define CC_THREAD_MTX_LOCK        "thread::mtx_lock"
- 
- /**
-  * @brief Attempts to lock a mutex without blocking.
-  * 
-  * @signature int (*)(mtx_t* mtx)
-  */
- #define CC_THREAD_MTX_TRYLOCK     "thread::mtx_trylock"
- 
- /**
-  * @brief Unlocks a mutex.
-  * 
-  * @signature int (*)(mtx_t* mtx)
-  */
- #define CC_THREAD_MTX_UNLOCK      "thread::mtx_unlock"
- 
- /**
-  * @brief Attempts to lock a mutex until a specified timeout.
-  * 
-  * @signature int (*)(mtx_t* mtx, const struct timespec* ts)
-  */
- #define CC_THREAD_MTX_TIMEDLOCK   "thread::mtx_timedlock"
- 
  // ---------------- Raw Thread Functions ----------------
  
  /**
