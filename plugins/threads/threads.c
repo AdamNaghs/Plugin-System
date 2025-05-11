@@ -3,74 +3,87 @@
 #include <string.h>
 #include <stdio.h>
 
-
-int core_mtx_init(mtx_t* mtx, int type) {
+int core_mtx_init(mtx_t *mtx, int type)
+{
     return mtx_init(mtx, type);
 }
 
-void core_mtx_destroy(mtx_t* mtx) {
+void core_mtx_destroy(mtx_t *mtx)
+{
     mtx_destroy(mtx);
 }
 
-int core_mtx_lock(mtx_t* mtx) {
+int core_mtx_lock(mtx_t *mtx)
+{
     return mtx_lock(mtx);
 }
 
-int core_mtx_trylock(mtx_t* mtx) {
+int core_mtx_trylock(mtx_t *mtx)
+{
     return mtx_trylock(mtx);
 }
 
-int core_mtx_unlock(mtx_t* mtx) {
+int core_mtx_unlock(mtx_t *mtx)
+{
     return mtx_unlock(mtx);
 }
 
-int core_mtx_timedlock(mtx_t* mtx, const struct timespec* ts) {
+int core_mtx_timedlock(mtx_t *mtx, const struct timespec *ts)
+{
     return mtx_timedlock(mtx, ts);
 }
 
-int core_thrd_create(thrd_t* thr, thrd_start_t func, void* arg) {
+int core_thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
+{
     return thrd_create(thr, func, arg);
 }
 
-int core_thrd_join(thrd_t thr, int* res) {
+int core_thrd_join(thrd_t thr, int *res)
+{
     return thrd_join(thr, res);
 }
 
-int core_thrd_detach(thrd_t thr) {
+int core_thrd_detach(thrd_t thr)
+{
     return thrd_detach(thr);
 }
 
-int core_thrd_sleep(const struct timespec* duration, struct timespec* remaining) {
+int core_thrd_sleep(const struct timespec *duration, struct timespec *remaining)
+{
     return thrd_sleep(duration, remaining);
 }
 
-void core_thrd_exit(int res) {
+void core_thrd_exit(int res)
+{
     thrd_exit(res);
 }
 
-void core_thrd_yield(void) {
+void core_thrd_yield(void)
+{
     thrd_yield();
 }
-
 
 #define MAX_THREADS 32
 #define MAX_QUEUED_JOBS 64
 
-typedef struct {
+typedef struct
+{
     thrd_t handle;
     int active;
     int finished;
-    void* user_data;
-    int (*fn)(void*);
+    void *user_data;
+    int (*fn)(void *);
 } ThreadJob;
 
-typedef struct {
-    int (*fn)(void*);
-    void* user_data;
+typedef struct
+{
+    int (*fn)(void *);
+    void *user_data;
 } QueuedJob;
 
-typedef struct {
-    QueuedJob* data;
+typedef struct
+{
+    QueuedJob *data;
     size_t head;
     size_t tail;
     size_t count;
@@ -81,30 +94,34 @@ static JobQueue job_queue;
 
 static ThreadJob jobs[MAX_THREADS];
 
-static int thread_entry(void* arg) {
-    ThreadJob* job = (ThreadJob*)arg;
+static int thread_entry(void *arg)
+{
+    ThreadJob *job = (ThreadJob *)arg;
     job->fn(job->user_data);
     job->finished = 1;
     return 0;
 }
 
-void job_queue_init(JobQueue* q) {
-    q->capacity = 64;  // initial capacity
+void job_queue_init(JobQueue *q)
+{
+    q->capacity = 64; // initial capacity
     q->data = malloc(sizeof(QueuedJob) * q->capacity);
     q->head = q->tail = q->count = 0;
 }
 
-void job_queue_free(JobQueue* q) {
+void job_queue_free(JobQueue *q)
+{
     free(q->data);
     q->data = NULL;
     q->count = q->capacity = q->head = q->tail = 0;
 }
 
-
-void job_queue_push(JobQueue* q, int (*fn)(void*), void* user_data) {
-    if (q->count >= q->capacity) {
+void job_queue_push(JobQueue *q, int (*fn)(void *), void *user_data)
+{
+    if (q->count >= q->capacity)
+    {
         size_t new_capacity = q->capacity * 2;
-        QueuedJob* new_data = malloc(sizeof(QueuedJob) * new_capacity);
+        QueuedJob *new_data = malloc(sizeof(QueuedJob) * new_capacity);
 
         // Copy circular queue into linear layout
         for (size_t i = 0; i < q->count; ++i)
@@ -117,13 +134,15 @@ void job_queue_push(JobQueue* q, int (*fn)(void*), void* user_data) {
         q->capacity = new_capacity;
     }
 
-    q->data[q->tail] = (QueuedJob){ fn, user_data };
+    q->data[q->tail] = (QueuedJob){fn, user_data};
     q->tail = (q->tail + 1) % q->capacity;
     q->count++;
 }
 
-int job_queue_pop(JobQueue* q, QueuedJob* out) {
-    if (q->count == 0) return 0;
+int job_queue_pop(JobQueue *q, QueuedJob *out)
+{
+    if (q->count == 0)
+        return 0;
 
     *out = q->data[q->head];
     q->head = (q->head + 1) % q->capacity;
@@ -131,15 +150,18 @@ int job_queue_pop(JobQueue* q, QueuedJob* out) {
     return 1;
 }
 
+static int try_start_queued_job()
+{
+    if (job_queue.count == 0)
+        return 0;
 
-
-static int try_start_queued_job() {
-    if (job_queue.count == 0) return 0;
-
-    for (int i = 0; i < MAX_THREADS; i++) {
-        if (!jobs[i].active) {
+    for (int i = 0; i < MAX_THREADS; i++)
+    {
+        if (!jobs[i].active)
+        {
             QueuedJob qj;
-            if (!job_queue_pop(&job_queue, &qj)) return 0;
+            if (!job_queue_pop(&job_queue, &qj))
+                return 0;
 
             jobs[i].active = 1;
             jobs[i].finished = 0;
@@ -153,10 +175,12 @@ static int try_start_queued_job() {
     return 0;
 }
 
-
-void thread_spawn(int (*fn)(void*), void* user_data) {
-    for (int i = 0; i < MAX_THREADS; i++) {
-        if (!jobs[i].active) {
+void thread_spawn(int (*fn)(void *), void *user_data)
+{
+    for (int i = 0; i < MAX_THREADS; i++)
+    {
+        if (!jobs[i].active)
+        {
             jobs[i].active = 1;
             jobs[i].finished = 0;
             jobs[i].fn = fn;
@@ -167,26 +191,32 @@ void thread_spawn(int (*fn)(void*), void* user_data) {
     }
 
     // No thread slot available — queue it
-    job_queue_push(&job_queue,fn, user_data);
+    job_queue_push(&job_queue, fn, user_data);
 }
 
-int update(CoreContext* ctx) {
+int update(CoreContext *ctx)
+{
     (void)ctx;
 
-    for (int i = 0; i < MAX_THREADS; i++) {
-        if (jobs[i].active && jobs[i].finished) {
+    for (int i = 0; i < MAX_THREADS; i++)
+    {
+        if (jobs[i].active && jobs[i].finished)
+        {
             thrd_join(jobs[i].handle, NULL);
             jobs[i].active = 0;
         }
     }
 
     // Try to start any queued jobs
-    while (try_start_queued_job()) {}
+    while (try_start_queued_job())
+    {
+    }
 
     return 0;
 }
 
-int init(CoreContext* ctx) {
+int init(CoreContext *ctx)
+{
     memset(jobs, 0, sizeof(jobs));
     job_queue_init(&job_queue);
 
@@ -211,12 +241,15 @@ int init(CoreContext* ctx) {
     return 0;
 }
 
-int shutdown(CoreContext* ctx) {
+int shutdown(CoreContext *ctx)
+{
     (void)ctx;
 
     // Wait for all threads to finish
-    for (int i = 0; i < MAX_THREADS; i++) {
-        if (jobs[i].active) {
+    for (int i = 0; i < MAX_THREADS; i++)
+    {
+        if (jobs[i].active)
+        {
             thrd_join(jobs[i].handle, NULL);
             jobs[i].active = 0;
         }
@@ -226,17 +259,17 @@ int shutdown(CoreContext* ctx) {
     return 0;
 }
 
-static const char* deps[] = { NULL };
-static const char* optional[] = { NULL };
-static PluginMetadata meta = { "Threads", deps, optional };
+static const char *deps[] = {NULL};
+static const char *optional[] = {NULL};
+static PluginMetadata meta = {"Threads", deps, optional};
 
-PluginAPI Load() {
+PluginAPI Load()
+{
     return (PluginAPI){
         .init = init,
         .update = update,
         .shutdown = shutdown,
-        .meta = &meta
-    };
+        .meta = &meta};
 }
 
 /*
