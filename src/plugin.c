@@ -212,12 +212,30 @@ int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
     return 1; // Success
 }
 
+void plugin_manager_hot_reload(PluginManager* pm, CoreContext* ctx)
+{
+    ctx->log(LL_WARN,"Hot reloading plugins...\n");
+
+    // Shutdown and free existing plugins
+    plugin_manager_shutdown(pm, ctx);
+    plugin_manager_free(pm);
+
+    // Recreate fresh empty plugin list
+    plugin_manager_new(pm, "./build/plugins"); // or whatever your folder is
+
+    // Init them again
+    plugin_manager_init(pm, ctx);
+
+    ctx->log(LL_INFO,"Hot reload complete.\n");
+}
+
+
 void plugin_manager_init(PluginManager *pm, CoreContext *ctx)
 {
     Plugin *sorted_plugins[MAX_PLUGIN_COUNT];
     if (!sort_plugins_by_dependency(pm, sorted_plugins))
     {
-        logger(LL_ERROR, "\t\tPlugin dependency sorting failed");
+        ctx->log(LL_ERROR, "\t\tPlugin dependency sorting failed");
         exit(1);
     }
 
@@ -235,7 +253,7 @@ void plugin_manager_init(PluginManager *pm, CoreContext *ctx)
 
     for (i = 0; i < pm->plugins.len; i++) //  load most depended plugins first
     {
-        logger(LL_INFO, "\t\tLoading Plugin: %s", pm->plugins.list[i].api->meta->name);
+        ctx->log(LL_INFO, "\t\tLoading Plugin: %s", pm->plugins.list[i].api->meta->name);
         if (pm->plugins.list[i].api->init)
             pm->plugins.list[i].api->init(ctx);
     }
@@ -252,19 +270,19 @@ void plugin_manager_update(PluginManager *pm, CoreContext *ctx)
 }
 void plugin_manager_shutdown(PluginManager *pm, CoreContext *ctx)
 {
-    logger(LL_INFO, "\t\tPlugin Shutdown:");
+    ctx->log(LL_INFO, "\t\tPlugin Shutdown:");
     size_t i;
     for (i = pm->plugins.len; i-- > 0;) //  unload in least depended plugins first
     {
         if (pm->plugins.list[i].api->shutdown)
         {
             pm->plugins.list[i].api->shutdown(ctx);
-            logger(LL_INFO, "\t\t+\t%s \tsuccessfully shutdown.", pm->plugins.list[i].api->meta->name);
+            ctx->log(LL_INFO, "\t\t+\t%s \tsuccessfully shutdown.", pm->plugins.list[i].api->meta->name);
         }
         else
         {
-            logger(LL_INFO, "\t\t-\t%s \tmissing shutdown.", pm->plugins.list[i].api->meta->name);
+            ctx->log(LL_INFO, "\t\t-\t%s \tmissing shutdown.", pm->plugins.list[i].api->meta->name);
         }
     }
-    logger(LL_INFO, "\t\t\tShutdown %zu plugins.", pm->plugins.len);
+    ctx->log(LL_INFO, "\t\t\tShutdown %zu plugins.", pm->plugins.len);
 }
