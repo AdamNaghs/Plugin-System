@@ -47,14 +47,20 @@ SignalConnectionArray* get_or_create_signal_array(const char* name) {
     return arr;
 }
 
-void signal_connect(const char* name, SignalCallback cb, void* user_data) {
-    SignalConnectionArray* arr = get_or_create_signal_array(name);
-    if (arr->count >= arr->capacity) {
+void signal_connection_array_push(SignalConnectionArray* arr, const char* name, SignalCallback cb, void* user_data) {
+    if (arr->count == arr->capacity) {
         arr->capacity *= 2;
         arr->data = realloc(arr->data, arr->capacity * sizeof(SignalConnection));
     }
     arr->data[arr->count++] = (SignalConnection){ name, cb, user_data };
 }
+
+
+void signal_connect(const char* name, SignalCallback cb, void* user_data) {
+    SignalConnectionArray* arr = get_or_create_signal_array(name);
+    signal_connection_array_push(arr, name, cb, user_data);
+}
+
 
 void signal_emit(CoreContext* ctx, const char* name, void* sender, void* args) {
     SignalConnectionArray* arr = mm_get(&signal_map, STR((char*)name));
