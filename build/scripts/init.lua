@@ -1,5 +1,3 @@
--- scripts/init.lua
-
 local counter = 0
 
 -- Called when our own test signal is emitted
