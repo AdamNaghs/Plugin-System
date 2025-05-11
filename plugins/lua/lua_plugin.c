@@ -51,10 +51,10 @@ static int lua_signal_emit(lua_State* L)
         return 0;
 
     if (!lua_isnoneornil(L, 2))
-        sender = lua_topointer(L, 2); // cast any Lua object to a unique pointer (safe identity)
+        sender = (void*)lua_topointer(L, 2); // cast any Lua object to a unique pointer (safe identity)
 
     if (!lua_isnoneornil(L, 3))
-        args = lua_topointer(L, 3);
+        args = (void*)lua_topointer(L, 3);
 
     signal_emit_fn(lua_ctx, signal_name, sender, args);
 
@@ -124,7 +124,7 @@ static int lua_memory_get(lua_State* L)
     if (!lua_ctx)
         return 0;
 
-    void* ptr = CC_GET(lua_ctx, key);
+    void* ptr = mm_get(&lua_ctx->memory.map,STR((char*)key));
     if (!ptr)
     {
         lua_pushnil(L);
