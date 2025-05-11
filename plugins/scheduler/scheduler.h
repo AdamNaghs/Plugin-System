@@ -50,6 +50,8 @@
   * @param user_data  Optional pointer to user-defined data.
   */
  void scheduler_register(const char* name, float interval, ScheduledFn fn, void* user_data);
+
+ typedef void (*scheduler_register_fn_t)(const char* name, float interval, ScheduledFn fn, void* user_data);
  
  #endif /* _SCHEDULER */
  

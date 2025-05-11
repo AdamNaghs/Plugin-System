@@ -80,6 +80,8 @@
   * @param user_data  Pointer to arbitrary user data passed into the job.
   */
  void thread_spawn(int (*fn)(void*), void* user_data);
+
+ typedef void (*thread_spawn_fn_t)(int (*fn)(void*), void* user_data);
  
  #endif /* _THREADS_PLUGIN_H */
  

@@ -94,6 +94,8 @@
   */
  void signal_connect(const char* name, SignalCallback cb, void* user_data);
  
+ typedef void (*signal_connect_fn_t)(const char* name, SignalCallback cb, void* user_data);
+
  /**
   * @brief Emits a signal immediately (synchronously).
   *
@@ -104,6 +106,8 @@
   */
  void signal_emit(CoreContext* ctx, const char* name, void* sender, void* args);
  
+ typedef void (*signal_emit_fn_t)(CoreContext* ctx, const char* name, void* sender, void* args);
+
  /**
   * @brief Queues a signal to be emitted on the next frame.
   *
@@ -112,6 +116,8 @@
   * @param args    Optional argument payload.
   */
  void signal_emit_deferred(const char* name, void* sender, void* args);
+
+ typedef void (*signal_emit_deferred_fn_t)(const char* name, void* sender, void* args);
  
  /**
   * @brief Flushes all deferred signals by emitting them.
