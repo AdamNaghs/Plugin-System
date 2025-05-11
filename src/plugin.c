@@ -132,28 +132,50 @@ static Node *find_node(Node *nodes, int count, const char *name)
     return NULL;
 }
 
-static int dfs(Node *node, Node **sorted, int *index, Node *nodes, int total)
+static int dfs_with_optional(Node *node, Node **sorted, int *index, Node *nodes, int total)
 {
     if (node->visiting)
     {
-        logger(LL_ERROR, "\t\tCyclic dependency detected at %s", node->name);
+        logger(LL_ERROR, "\t\tCyclic dependency detected at plugin '%s'", node->name);
         return 0;
     }
     if (node->visited)
+    {
         return 1;
+    }
 
     node->visiting = 1;
 
+    // First handle required dependencies
     for (const char **dep = node->depends_on; dep && *dep; dep++)
     {
         Node *dep_node = find_node(nodes, total, *dep);
         if (!dep_node)
         {
-            logger(LL_ERROR, "\t\tMissing dependency: %s for plugin %s", *dep, node->name);
+            logger(LL_ERROR, "\t\tMissing REQUIRED dependency '%s' for plugin '%s'", *dep, node->name);
             return 0;
         }
-        if (!dfs(dep_node, sorted, index, nodes, total))
+        if (!dfs_with_optional(dep_node, sorted, index, nodes, total))
+        {
             return 0;
+        }
+    }
+
+    // Then handle optional dependencies
+    for (const char **opt = node->optional_deps; opt && *opt; opt++)
+    {
+        Node *opt_node = find_node(nodes, total, *opt);
+        if (opt_node)
+        {
+            if (!dfs_with_optional(opt_node, sorted, index, nodes, total))
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            logger(LL_WARN, "\t\tOptional dependency '%s' missing for plugin '%s'", *opt, node->name);
+        }
     }
 
     node->visited = 1;
@@ -162,6 +184,7 @@ static int dfs(Node *node, Node **sorted, int *index, Node *nodes, int total)
 
     return 1;
 }
+
 
 int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
 {
@@ -180,37 +203,27 @@ int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
         nodes[i].plugin = p;
     }
 
-    // Sort
+    // Modified DFS to handle both required and optional dependencies
     for (int i = 0; i < total; i++)
     {
         if (!nodes[i].visited)
         {
-            if (!dfs(&nodes[i], sorted, &index, nodes, total))
+            if (!dfs_with_optional(&nodes[i], sorted, &index, nodes, total))
             {
                 return 0; // Failed
             }
         }
     }
 
-    // Validate optional deps (warn only)
+    // Copy sorted plugins into output
     for (int i = 0; i < total; i++)
     {
-        const char **opt = nodes[i].optional_deps;
-        while (opt && *opt)
-        {
-            if (!find_node(nodes, total, *opt))
-            {
-                logger(LL_WARN, "\t\tOptional dependency '%s' missing for plugin '%s'",
-                       *opt, nodes[i].name);
-            }
-            opt++;
-        }
-        // Copy sorted plugins
         sorted_out[i] = sorted[i]->plugin;
     }
 
     return 1; // Success
 }
+
 
 void plugin_manager_hot_reload(PluginManager* pm, CoreContext* ctx)
 {
