@@ -47,6 +47,14 @@
   * @param pm Pointer to the PluginManager.
   */
  void plugin_manager_free(PluginManager* pm);
+
+ /**
+  * @brief Hot reloads all plugins.
+  * 
+  * @param pm   Pointer to the PluginManager.
+  * @param ctx  Pointer to the CoreContext.
+  */
+ void plugin_manager_hot_reload(PluginManager* pm, CoreContext* ctx);
  
  /**
   * @brief Initializes all plugins, resolving and respecting dependencies.
