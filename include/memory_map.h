@@ -127,6 +127,15 @@
   * @return Pointer to memory, or NULL if not found.
   */
  void *mm_get(MemoryMap *mm, String name);
+
+  /**
+  * @brief Retrieves memory by key.
+  *
+  * @param mm Pointer to the MemoryMap.
+  * @param name Key to look up.
+  * @return Size of value at key. 0 if key is not found.
+  */ 
+  size_t mm_get_size(MemoryMap *mm, String name);
  
  /**
   * @brief Binds an external memory pointer to a string key.

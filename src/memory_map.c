@@ -101,6 +101,24 @@ void *mm_get(MemoryMap *mm, String name)
     return NULL;
 }
 
+size_t mm_get_size(MemoryMap *mm, String name)
+{
+    size_t index = mm->_hash(name.data, name.len) % mm->capacity;
+    MemoryBucket *bucket = &mm->buckets[index];
+    if (!bucket->entries)
+        return 0;
+
+    for (size_t i = 0; i < bucket->count; ++i)
+    {
+        String existing = {bucket->entries[i].name, strlen(bucket->entries[i].name)};
+        if (mm_str_eq(name, existing))
+        {
+            return bucket->entries[i].size;
+        }
+    }
+    return 0;
+}
+
 void mm_free(MemoryMap *mm)
 {
     for (size_t i = 0; i < mm->capacity; ++i)
