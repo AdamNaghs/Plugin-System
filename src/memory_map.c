@@ -142,7 +142,6 @@ void mm_free(MemoryMap *mm)
 
 void mm_optimize(MemoryMap *mm, float target_load)
 {
-    /*float target_load = 0.75f;*/
     size_t new_capacity = (size_t)((float)mm->count / target_load);
     if (new_capacity < 8)
         new_capacity = 8;
@@ -150,7 +149,7 @@ void mm_optimize(MemoryMap *mm, float target_load)
     MemoryBucket *new_buckets = mm->_malloc(sizeof(MemoryBucket) * new_capacity);
     if (!new_buckets)
         return;
-
+    
     for (size_t i = 0; i < new_capacity; ++i)
     {
         new_buckets[i].entries = NULL;
@@ -167,7 +166,7 @@ void mm_optimize(MemoryMap *mm, float target_load)
             size_t new_index = mm->_hash(entry->name, strlen(entry->name)) % new_capacity;
             MemoryBucket *new_bucket = &new_buckets[new_index];
 
-            if (new_bucket->entries == NULL)
+            if (new_bucket->entries == NULL) 
             {
                 new_bucket->capacity = 4;
                 new_bucket->entries = mm->_malloc(sizeof(MemoryEntry) * new_bucket->capacity);
@@ -186,8 +185,8 @@ void mm_optimize(MemoryMap *mm, float target_load)
         mm->_free(old_bucket->entries);
     }
 
-    mm->_free(mm->buckets);
-    mm->buckets = new_buckets;
+    mm->_free(mm->buckets); //  free old instance
+    mm->buckets = new_buckets; // connect new data
     mm->capacity = new_capacity;
 }
 
@@ -221,7 +220,7 @@ int mm_remove(MemoryMap *mm, String name)
             bucket->count--;
             mm->count--;
 
-            // Optionally shrink the bucket array if it's too sparse
+            // Shrink the bucket array if it's too sparse
             if (bucket->count == 0)
             {
                 mm->_free(bucket->entries);
