@@ -8,7 +8,6 @@ RAYLIB_PREFIX := $(shell brew --prefix raylib 2>/dev/null)
 LUA_PREFIX := $(shell brew --prefix lua 2>/dev/null)
 PYTHON_PREFIX := $(shell brew --prefix python 2>/dev/null)
 
-# Fallbacks if detection fails
 ifeq ($(RAYLIB_PREFIX),)
   RAYLIB_PREFIX := /usr/local
 endif
@@ -27,22 +26,23 @@ RAYLIB_LDFLAGS := -L$(RAYLIB_PREFIX)/lib -lraylib -lm -ldl -lpthread
 LUA_CFLAGS := -I$(LUA_PREFIX)/include/lua
 LUA_LDFLAGS := -L$(LUA_PREFIX)/lib -llua -lm -ldl
 
-# Python flags (assumes Python 3.13, adjust if needed)
+# Python flags
 PY_CFLAGS := -I$(PYTHON_PREFIX)/Frameworks/Python.framework/Versions/3.13/include/python3.13
 PY_LDFLAGS := -F$(PYTHON_PREFIX)/Frameworks -framework Python
-
 
 # Source files
 MAIN := src/main.c
 TINYCTHREAD_SRC := external/tinycthread/source/tinycthread.c
 CORE_SRCS := $(filter-out src/main.c, $(wildcard src/*.c))
 
-GRAPHICS_SRC := plugins/raylib/graphics.c
+GRAPHICS_SRC := plugins/graphics/graphics.c
 SCHEDULER_SRC := plugins/scheduler/scheduler.c
 SIGNALS_SRC := plugins/signals/signals.c
 THREADS_SRC := plugins/threads/threads.c
 LUA_SRC := plugins/lua/lua_plugin.c
 PY_SRC := plugins/python/python_plugin.c
+ENTITY_SRC := plugins/entity/entity.c
+GAME_SRC := plugins/game/game.c
 
 # Output binaries
 TARGETS := build/test_runner \
@@ -51,7 +51,9 @@ TARGETS := build/test_runner \
            build/plugins/signals.so \
            build/plugins/threads.so \
            build/plugins/lua.so \
-           build/plugins/python.so
+           build/plugins/python.so \
+           build/plugins/entity.so \
+           build/plugins/game.so
 
 # Targets
 all: $(TARGETS)
@@ -76,6 +78,12 @@ build/plugins/lua.so: $(LUA_SRC) $(CORE_SRCS)
 
 build/plugins/python.so: $(PY_SRC) $(CORE_SRCS)
 	$(CC) -shared $(CFLAGS) $(PY_CFLAGS) $^ -o $@ $(LDFLAGS) $(PY_LDFLAGS)
+
+build/plugins/entity.so: $(ENTITY_SRC) $(CORE_SRCS)
+	$(CC) -shared $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+build/plugins/game.so: $(GAME_SRC) $(CORE_SRCS)
+	$(CC) -shared $(CFLAGS) $(RAYLIB_CFLAGS) $^ -o $@ $(LDFLAGS) $(RAYLIB_LDFLAGS)
 
 clean:
 	rm -f $(TARGETS) *.o
