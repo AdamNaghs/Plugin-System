@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdio.h>
 
+// HELPER METHODS
+
 static MemoryMap signal_map;
 static SignalQueueArray signal_queue;
 
@@ -55,6 +57,15 @@ void signal_connection_array_push(SignalConnectionArray* arr, const char* name, 
     arr->data[arr->count++] = (SignalConnection){ name, cb, user_data };
 }
 
+void signal_flush(CoreContext* ctx) {
+    for (size_t i = 0; i < signal_queue.count; i++) {
+        QueuedSignal* s = &signal_queue.data[i];
+        signal_emit(ctx, s->name, s->sender, s->args);
+    }
+    signal_queue_clear(&signal_queue);
+}
+
+// PUBLIC METHODS
 
 void signal_connect(const char* name, SignalCallback cb, void* user_data) {
     SignalConnectionArray* arr = get_or_create_signal_array(name);
@@ -76,13 +87,7 @@ void signal_emit_deferred(const char* name, void* sender, void* args) {
     signal_queue_push(&signal_queue, name, sender, args);
 }
 
-void signal_flush(CoreContext* ctx) {
-    for (size_t i = 0; i < signal_queue.count; i++) {
-        QueuedSignal* s = &signal_queue.data[i];
-        signal_emit(ctx, s->name, s->sender, s->args);
-    }
-    signal_queue_clear(&signal_queue);
-}
+// PLUGIN API
 
 int init(CoreContext* ctx) {
     mm_init(&signal_map, 32, malloc, free, mm_hash_default);
