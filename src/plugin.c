@@ -3,9 +3,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#define MAX_DEPENDENCIES 64
-#define MAX_PLUGIN_COUNT 64
-
 #ifdef _WIN32
 #include <windows.h>
 #define DYNLIB_HANDLE HMODULE
@@ -21,14 +18,12 @@
 #define DYNLIB_CLOSE(handle) dlclose(handle)
 #endif
 
-#define MAX_PLUGINS 64
-
 void plugin_manager_new(PluginManager *pm, char *folder_path)
 {
-    pm->plugins.list = (Plugin *)calloc(MAX_PLUGINS, sizeof(Plugin));
+    pm->plugins.list = NULL;
     pm->plugins.len = 0;
+    size_t capacity = 0;
 
-    // Simplified file discovery for POSIX
 #ifndef _WIN32
     DIR *dir = opendir(folder_path);
     if (!dir)
@@ -61,39 +56,34 @@ void plugin_manager_new(PluginManager *pm, char *folder_path)
                 continue;
             }
 
+            // Grow plugin list dynamically
+            if (pm->plugins.len >= capacity)
+            {
+                capacity = (capacity == 0) ? 8 : capacity * 2;
+                Plugin *new_list = realloc(pm->plugins.list, sizeof(Plugin) * capacity);
+                if (!new_list)
+                {
+                    logger(LL_ERROR, "Failed to realloc plugin list.");
+                    exit(1);
+                }
+                pm->plugins.list = new_list;
+            }
+
             Plugin *plugin = &pm->plugins.list[pm->plugins.len++];
             plugin->api = malloc(sizeof(PluginAPI));
             *plugin->api = load_func();
             plugin->handle = handle;
             plugin->name = strdup(entry->d_name);
-            // plugin->name[strlen(plugin->name)-3] = 0; /* remove ".so" from name */
+
             logger(LL_INFO, "\t\tFound Plugin: %s", plugin->name);
         }
     }
     closedir(dir);
 #else
-// TODO: Use FindFirstFile / FindNextFile to scan DLLs on Windows
-// Hardcode test plugin for now (or use globbing library)
 #error "TODO: Implement plugin folder scanning on Windows using FindFirstFile"
-    char *dll_path = "plugin.dll"; // Update this
-    DYNLIB_HANDLE handle = DYNLIB_OPEN(dll_path);
-    if (!handle)
-        return;
-
-    PluginAPI (*load_func)() = (PluginAPI (*)())DYNLIB_SYM(handle, "Load");
-    if (!load_func)
-    {
-        DYNLIB_CLOSE(handle);
-        return;
-    }
-
-    Plugin *plugin = &pm->plugins.list[pm->plugins.len++];
-    plugin->api = malloc(sizeof(PluginAPI));
-    *plugin->api = load_func();
-    plugin->handle = handle;
-    plugin->name = strdup("plugin.dll");
 #endif
 }
+
 
 void plugin_manager_free(PluginManager *pm)
 {
@@ -187,10 +177,24 @@ static int dfs_with_optional(Node *node, Node **sorted, int *index, Node *nodes,
 
 int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
 {
-    Node nodes[MAX_PLUGIN_COUNT] = {0};
-    Node *sorted[MAX_PLUGIN_COUNT];
     int total = (int)pm->plugins.len;
     int index = 0;
+
+    // Dynamically allocate nodes and sorted arrays
+    Node *nodes = calloc(total, sizeof(Node));
+    if (!nodes)
+    {
+        logger(LL_ERROR, "Failed to allocate memory for nodes.");
+        return 0;
+    }
+
+    Node **sorted = calloc(total, sizeof(Node*));
+    if (!sorted)
+    {
+        logger(LL_ERROR, "Failed to allocate memory for sorted nodes.");
+        free(nodes);
+        return 0;
+    }
 
     // Create nodes
     for (int i = 0; i < total; i++)
@@ -209,6 +213,8 @@ int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
         {
             if (!dfs_with_optional(&nodes[i], sorted, &index, nodes, total))
             {
+                free(nodes);
+                free(sorted);
                 return 0; // Failed
             }
         }
@@ -220,8 +226,12 @@ int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
         sorted_out[i] = sorted[i]->plugin;
     }
 
+    free(nodes);
+    free(sorted);
+
     return 1; // Success
 }
+
 
 void plugin_manager_hot_reload(PluginManager *pm, CoreContext *ctx)
 {
@@ -242,32 +252,54 @@ void plugin_manager_hot_reload(PluginManager *pm, CoreContext *ctx)
 
 void plugin_manager_init(PluginManager *pm, CoreContext *ctx)
 {
-    Plugin *sorted_plugins[MAX_PLUGIN_COUNT];
+    size_t total = pm->plugins.len;
+
+    // Dynamically allocate sorted_plugins
+    Plugin **sorted_plugins = calloc(total, sizeof(Plugin *));
+    if (!sorted_plugins)
+    {
+        ctx->log(LL_ERROR, "\t\tFailed to allocate memory for plugin sorting");
+        exit(1);
+    }
+
     if (!sort_plugins_by_dependency(pm, sorted_plugins))
     {
         ctx->log(LL_ERROR, "\t\tPlugin dependency sorting failed");
+        free(sorted_plugins);
         exit(1);
     }
 
     // Create a new plugin list in sorted order
-    Plugin *new_list = malloc(sizeof(Plugin) * pm->plugins.len);
-    size_t i;
-    for (i = 0; i < pm->plugins.len; ++i)
+    Plugin *new_list = malloc(sizeof(Plugin) * total);
+    if (!new_list)
+    {
+        ctx->log(LL_ERROR, "\t\tFailed to allocate memory for plugin list");
+        free(sorted_plugins);
+        exit(1);
+    }
+
+    for (size_t i = 0; i < total; ++i)
     {
         new_list[i] = *sorted_plugins[i]; // copy struct contents
     }
+
+    free(sorted_plugins);
 
     // Replace the old list
     free(pm->plugins.list);
     pm->plugins.list = new_list;
 
-    for (i = 0; i < pm->plugins.len; i++) //  load most depended plugins first
+    // Initialize plugins in sorted order
+    for (size_t i = 0; i < pm->plugins.len; i++)
     {
         ctx->log(LL_INFO, "\t\tLoading Plugin: %s", pm->plugins.list[i].api->meta->name);
         if (pm->plugins.list[i].api->init)
+        {
             pm->plugins.list[i].api->init(ctx);
+        }
     }
 }
+
 
 void plugin_manager_update(PluginManager *pm, CoreContext *ctx)
 {
