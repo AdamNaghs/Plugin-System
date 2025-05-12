@@ -13,7 +13,7 @@ int init(CoreContext *ctx)
 
 int update(CoreContext *ctx)
 {
-    if (WindowShouldClose() || IsKeyPressed(KEY_SPACE))
+    if (WindowShouldClose())
     {
         int *ptr = CC_GET(ctx, "CORE_SHOULD_RUN");
         *ptr = 0;
