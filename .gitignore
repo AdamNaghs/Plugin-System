@@ -10,3 +10,5 @@ build/plugins/graphics.so
 logs
 build/plugins/lua.so
 build/plugins/python.so
+build/plugins/entity.so
+build/plugins/game.so
