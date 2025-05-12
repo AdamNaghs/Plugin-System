@@ -15,7 +15,7 @@ void core_init(Core* core, int version, char* plugin_folder)
     int *should_hot_reload = CC_ALLOC(&core->context,"CORE_SHOULD_HOT_RELOAD",sizeof(int));
     *should_run = 1;
     *should_hot_reload = 0;
-    
+
     logger(LL_INFO,"\tInitializing Plugins");
     plugin_manager_init(&core->manager,&core->context);
     logger(LL_INFO, "Core Initilized.");
@@ -26,7 +26,7 @@ void core_init(Core* core, int version, char* plugin_folder)
 void core_run(Core* core)
 {
     int *should_run = CC_GET(&core->context,"CORE_SHOULD_RUN");
-    int *should_hot_reload = CC_GET(&core->context,"COER_SHOULD_HOT_RELOAD");
+    int *should_hot_reload = CC_GET(&core->context,"CORE_SHOULD_HOT_RELOAD");
     while (should_run && *should_run) {
         core_context_update(&core->context);
         plugin_manager_update(&core->manager,&core->context);
