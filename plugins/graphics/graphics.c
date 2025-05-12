@@ -7,6 +7,7 @@ int init(CoreContext *ctx)
 {
     (void)ctx;
     signal_emit_fn = CC_GET(ctx,CC_SIGNAL_EMIT);
+    SetTargetFPS(60);
     InitWindow(800, 600, "Test");
     return 0;
 }
