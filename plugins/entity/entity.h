@@ -50,21 +50,23 @@ typedef struct EntityType
     uint64_t user_data_size;
 } EntityType;
 
-#define ENTITY_TYPE(type_name, init_fn, update_fn, shutdown_fn, ...) \
-    static entity_method_fn_t type_name##_extra_methods[] = { __VA_ARGS__ }; \
-    static EntityType type_name = { \
-        .name = #type_name, \
+/* Order matters for extra functions being used with custom states */
+#define ENTITY_TYPE(entity_var_name, struct_type_name, init_fn, update_fn, shutdown_fn, ...) \
+    static entity_method_fn_t entity_var_name##_extra_methods[] = { __VA_ARGS__ }; \
+    static EntityType entity_var_name = { \
+        .name = #entity_var_name, \
         .methods = { \
             .init = init_fn, \
             .update = update_fn, \
             .shutdown = shutdown_fn, \
             .extra = { \
-                .len = sizeof(type_name##_extra_methods)/sizeof(entity_method_fn_t), \
-                .funcs = type_name##_extra_methods \
+                .len = sizeof(entity_var_name##_extra_methods)/sizeof(entity_method_fn_t), \
+                .funcs = entity_var_name##_extra_methods \
             } \
         }, \
-        .user_data_size = sizeof(struct type_name##_UserData) \
+        .user_data_size = sizeof(struct struct_type_name) \
     }
+
 
 
 struct Entity
