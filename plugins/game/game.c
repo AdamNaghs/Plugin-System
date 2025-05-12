@@ -3,8 +3,6 @@
 #include "../entity/entity.h"     // For entity_create, EntityType, etc.
 #include "../signals/signals.h"   // For signal_connect
 
-#include <stdlib.h>
-
 // Plugin Dependancies
 static entity_create_fn_t entity_create_fn;
 static entity_queue_free_fn_t entity_queue_free_fn;
