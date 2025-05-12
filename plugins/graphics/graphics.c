@@ -1,20 +1,6 @@
 #include "graphics.h"
 #include "../signals/signals.h"
 
-void renderable_draw(const Renderable* r)
-{
-    if (r->type == RENDERABLE_2D) {
-        if (r->r2d.texture) {
-            DrawTextureEx(*(r->r2d.texture), r->r2d.position, r->r2d.rotation, r->r2d.scale, r->r2d.tint);
-        }
-    }
-    else if (r->type == RENDERABLE_3D) {
-        if (r->r3d.model) {
-            DrawModelEx(*(r->r3d.model), r->r3d.position, r->r3d.rotation, 1.0f, r->r3d.scale, r->r3d.tint);
-        }
-    }
-}
-
 static signal_emit_fn_t signal_emit_fn;
 
 int init(CoreContext *ctx)
@@ -35,7 +21,7 @@ int update(CoreContext *ctx)
 
     BeginDrawing();
     ClearBackground(WHITE);
-    (*signal_emit_fn)(ctx,"graphics::draw_signal",NULL,NULL);
+    (*signal_emit_fn)(ctx,CC_GRAPHICS_DRAW_SIGNAL,NULL,NULL);
     EndDrawing();
     return 0;
 }
