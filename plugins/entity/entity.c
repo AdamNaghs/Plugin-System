@@ -296,7 +296,7 @@ int update(CoreContext *ctx)
             if (e->type.methods.update)
             {
                 EntityState next_state = e->type.methods.update(e);
-                e->meta.state = next_state; // <- Update state based on return
+                e->meta.state = next_state; // <- normal update
             }
         }
 
@@ -309,7 +309,8 @@ int update(CoreContext *ctx)
                 entity_method_fn_t extra_fn = e->type.methods.extra.funcs[index];
                 if (extra_fn)
                 {
-                    extra_fn(e);
+                    EntityState next_state = extra_fn(e);
+                    e->meta.state = next_state; // <- capture and assign new state from extra
                 }
             }
             else
@@ -321,7 +322,6 @@ int update(CoreContext *ctx)
     flush_destroyed_entities();
     return 0;
 }
-
 
 int shutdown(CoreContext *ctx)
 {
