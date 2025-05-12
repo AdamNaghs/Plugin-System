@@ -185,7 +185,6 @@ static int dfs_with_optional(Node *node, Node **sorted, int *index, Node *nodes,
     return 1;
 }
 
-
 int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
 {
     Node nodes[MAX_PLUGIN_COUNT] = {0};
@@ -224,10 +223,9 @@ int sort_plugins_by_dependency(PluginManager *pm, Plugin **sorted_out)
     return 1; // Success
 }
 
-
-void plugin_manager_hot_reload(PluginManager* pm, CoreContext* ctx)
+void plugin_manager_hot_reload(PluginManager *pm, CoreContext *ctx)
 {
-    ctx->log(LL_WARN,"Hot reloading plugins...\n");
+    ctx->log(LL_WARN, "Hot reloading plugins...\n");
 
     // Shutdown and free existing plugins
     plugin_manager_shutdown(pm, ctx);
@@ -239,9 +237,8 @@ void plugin_manager_hot_reload(PluginManager* pm, CoreContext* ctx)
     // Init them again
     plugin_manager_init(pm, ctx);
 
-    ctx->log(LL_INFO,"Hot reload complete.\n");
+    ctx->log(LL_INFO, "Hot reload complete.\n");
 }
-
 
 void plugin_manager_init(PluginManager *pm, CoreContext *ctx)
 {
