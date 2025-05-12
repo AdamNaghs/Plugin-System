@@ -17,4 +17,6 @@ void logger_shutdown();
 
 void logger(enum LogLevel level, const char* fmt, ...);
 
+typedef void (*logger_fn_t)(enum LogLevel level, const char* fmt, ...);
+
 #endif /*_CORE_LOGGER_H*/
