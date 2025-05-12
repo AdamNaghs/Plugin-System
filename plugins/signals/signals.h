@@ -118,15 +118,7 @@
  void signal_emit_deferred(const char* name, void* sender, void* args);
 
  typedef void (*signal_emit_deferred_fn_t)(const char* name, void* sender, void* args);
- 
- /**
-  * @brief Flushes all deferred signals by emitting them.
-  *
-  * Called automatically once per frame by the signal plugin.
-  *
-  * @param ctx  The current CoreContext.
-  */
- void signal_flush(CoreContext* ctx);
+
  
  #endif /* _SIGNALS_H */
  
