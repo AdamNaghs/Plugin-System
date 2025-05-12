@@ -145,7 +145,8 @@ static ssize_t entity_map_find(EntityID id)
     return -1; // Should not happen
 }
 
-static void entity_map_remove(EntityID id) {
+static void entity_map_remove(EntityID id)
+{
     ssize_t found_idx = entity_map_find(id);
     if (found_idx < 0)
         return;
@@ -158,7 +159,8 @@ static void entity_map_remove(EntityID id) {
     size_t mask = entity_map_capacity - 1;
     idx = (idx + 1) & mask;
 
-    while (entity_map[idx].id != ENTITY_MAP_EMPTY_ID) {
+    while (entity_map[idx].id != ENTITY_MAP_EMPTY_ID)
+    {
         EntityID rehash_id = entity_map[idx].id;
         size_t rehash_index = entity_map[idx].index;
 
@@ -172,7 +174,6 @@ static void entity_map_remove(EntityID id) {
         idx = (idx + 1) & mask;
     }
 }
-
 
 // --- ENTITY FUNCTIONS ---
 
@@ -286,19 +287,41 @@ int init(CoreContext *ctx)
 int update(CoreContext *ctx)
 {
     (void)ctx;
-
     for (size_t i = 0; i < entity_count; ++i)
     {
         Entity *e = &entities[i];
-        if (e->meta.state == ES_ACTIVE && e->type.methods.update)
+
+        if (e->meta.state == ES_ACTIVE)
         {
-            e->type.methods.update(e);
+            if (e->type.methods.update)
+            {
+                EntityState next_state = e->type.methods.update(e);
+                e->meta.state = next_state; // <- Update state based on return
+            }
+        }
+
+        if (e->meta.state >= ES_CUSTOM)
+        {
+            uint64_t index = (uint64_t)(e->meta.state - ES_CUSTOM);
+
+            if (index < e->type.methods.extra.len)
+            {
+                entity_method_fn_t extra_fn = e->type.methods.extra.funcs[index];
+                if (extra_fn)
+                {
+                    extra_fn(e);
+                }
+            }
+            else
+            {
+                ctx->log(LL_ERROR, "Entity (%llu) [type:%s] has invalid custom state index %llu!", e->meta.id, e->type.name, index);
+            }
         }
     }
-
     flush_destroyed_entities();
     return 0;
 }
+
 
 int shutdown(CoreContext *ctx)
 {
