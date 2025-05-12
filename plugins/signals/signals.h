@@ -11,8 +11,7 @@
  
  #include "../../include/plugin_api.h"
 
- #pragma once
- // signals_plugin.h — Keys and types exported by the Signals plugin
+
  
  /**
   * Connects a callback function to a named signal.
@@ -38,6 +37,9 @@
   */
  #define CC_SIGNAL_DEFERRED "signal::emit_deferred"
  
+ typedef uint64_t SignalID;
+
+ #define SIGNAL_INVALID_ID 0
  
  /**
   * @brief Function pointer type for signal callbacks.
@@ -49,10 +51,12 @@
   */
  typedef void (*SignalCallback)(CoreContext* ctx, void* sender, void* args, void* user_data);
  
+
  /**
   * @brief A connection between a signal name and a callback function.
   */
  typedef struct {
+     SignalID id;                    /**< Unique identifier. */
      const char* signal_name;        /**< The name of the signal to listen to. */
      SignalCallback callback;        /**< The callback function to invoke when the signal is emitted. */
      void* user_data;                /**< Optional user data to pass to the callback. */
@@ -92,9 +96,9 @@
   * @param cb         The callback function to invoke.
   * @param user_data  Optional user data to be passed to the callback.
   */
- void signal_connect(const char* name, SignalCallback cb, void* user_data);
+ SignalID signal_connect(const char* name, SignalCallback cb, void* user_data);
  
- typedef void (*signal_connect_fn_t)(const char* name, SignalCallback cb, void* user_data);
+ typedef SignalID (*signal_connect_fn_t)(const char* name, SignalCallback cb, void* user_data);
 
  /**
   * @brief Emits a signal immediately (synchronously).
@@ -118,6 +122,10 @@
  void signal_emit_deferred(const char* name, void* sender, void* args);
 
  typedef void (*signal_emit_deferred_fn_t)(const char* name, void* sender, void* args);
+
+ void signal_disconnect(SignalID id);
+
+ typedef void (*signal_disconnect_fn_t)(SignalID id);
 
  
  #endif /* _SIGNALS_H */

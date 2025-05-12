@@ -10,6 +10,7 @@
 
 static MemoryMap signal_map;
 static SignalQueueArray signal_queue;
+static SignalID signal_id_counter = 1;
 
 static void signal_queue_init(SignalQueueArray* q) {
     q->capacity = 16;
@@ -49,12 +50,14 @@ SignalConnectionArray* get_or_create_signal_array(const char* name) {
     return arr;
 }
 
-void signal_connection_array_push(SignalConnectionArray* arr, const char* name, SignalCallback cb, void* user_data) {
+SignalID signal_connection_array_push(SignalConnectionArray* arr, const char* name, SignalCallback cb, void* user_data) {
     if (arr->count == arr->capacity) {
         arr->capacity *= 2;
         arr->data = realloc(arr->data, arr->capacity * sizeof(SignalConnection));
     }
-    arr->data[arr->count++] = (SignalConnection){ name, cb, user_data };
+    SignalID id = signal_id_counter++;
+    arr->data[arr->count++] = (SignalConnection){id, name, cb, user_data };
+    return id;
 }
 
 void signal_flush(CoreContext* ctx) {
@@ -67,11 +70,35 @@ void signal_flush(CoreContext* ctx) {
 
 // PUBLIC METHODS
 
-void signal_connect(const char* name, SignalCallback cb, void* user_data) {
+SignalID signal_connect(const char* name, SignalCallback cb, void* user_data) {
     SignalConnectionArray* arr = get_or_create_signal_array(name);
-    signal_connection_array_push(arr, name, cb, user_data);
+    return signal_connection_array_push(arr, name, cb, user_data);
 }
 
+void signal_disconnect(SignalID id)
+{
+    for (size_t b = 0; b < signal_map.capacity; ++b)
+    {
+        MemoryBucket* bucket = &signal_map.buckets[b];
+        for (size_t e = 0; e < bucket->count; ++e)
+        {
+            MemoryEntry* entry = &bucket->entries[e];
+            if (!entry->data) continue;
+
+            SignalConnectionArray* arr = (SignalConnectionArray*)entry->data;
+            for (size_t i = 0; i < arr->count; ++i)
+            {
+                if (arr->data[i].id == id)
+                {
+                    // Remove connection by shifting the rest
+                    memmove(&arr->data[i], &arr->data[i + 1], (arr->count - i - 1) * sizeof(SignalConnection));
+                    arr->count--;
+                    return;
+                }
+            }
+        }
+    }
+}
 
 void signal_emit(CoreContext* ctx, const char* name, void* sender, void* args) {
     SignalConnectionArray* arr = mm_get(&signal_map, STR((char*)name));
